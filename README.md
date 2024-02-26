@@ -1,0 +1,1 @@
+test project for web scraping details from HLTV.org
