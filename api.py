@@ -30,7 +30,8 @@ def get_matches_for_event():
 def fetch_matches_for_event(event):
     # Web scraping logic to fetch matches for a specific event
     # For each event, you will need to determine the URL of the event page
-    event_url = event['url']  # Assuming you have stored the URL of the event in the event object
+
+    event_url = generate_clean_url(event['id'],event['name'])  # Assuming you have stored the URL of the event in the event object
     # Use the event URL to make a request and scrape match details
 
     # Placeholder for match details
@@ -40,11 +41,6 @@ def fetch_matches_for_event(event):
     # This will involve finding the appropriate HTML elements and extracting match information
 
     # Append match details to the list
-    match_details.append({
-        'teamA': 'Team A',
-        'teamB': 'Team B',
-        'status': 'Completed'
-    })
 
     return match_details
 @app.route('/events')
@@ -80,12 +76,17 @@ def fetch_hltv_events():
             name = event_holder.find('div', class_='event-name-small').text.strip()
             date = event_holder.find('span', class_='col-desc').text.strip()
 
+            # Extract the event URL to get the event ID
+            event_url = event_holder.find('a')['href']
+            event_id = event_url.split('/events/')[1].split('/')[0]
+
             # Check if the location element exists
             location_elem = event_holder.find('div', class_='eventlocation')
             location = location_elem.text.strip() if location_elem else None
 
             # Create a dictionary to store the event details
             event_details = {
+                'id': event_id,
                 'name': name,
                 'date': date,
                 'location': location
@@ -100,10 +101,22 @@ def fetch_hltv_events():
         print('Failed to fetch HLTV events:', response.status_code)
         return []
 
+
+# Function used to clean the event name for URL input
+def generate_clean_url(event_id,event_name):
+    # Replace the spaces with hyphens and remove any newlines
+    event_name = event_name.replace(' ','-').split('\n')[0]
+    # Make all lowercase
+    event_name = event_name.lower()
+    # Create the URL
+    event_url = f'https://www.hltv.org/events/{event_id}/{event_name}'
+    return event_url
+
+
 # Test the function
 featured_events = fetch_hltv_events()
 for event in featured_events:
-    print(event)
+    print(generate_clean_url(event['id'],event['name']))
 
 if __name__ == '__main__':
     app.run(debug=True)
