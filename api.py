@@ -31,18 +31,57 @@ def fetch_matches_for_event(event):
     # Web scraping logic to fetch matches for a specific event
     # For each event, you will need to determine the URL of the event page
 
-    event_url = generate_clean_url(event['id'],event['name'])  # Assuming you have stored the URL of the event in the event object
-    # Use the event URL to make a request and scrape match details
-
-    # Placeholder for match details
-    match_details = []
-
-    # Psuedo code to scrape match details from event page
-    # This will involve finding the appropriate HTML elements and extracting match information
-
-    # Append match details to the list
-
-    return match_details
+    event_url = generate_clean_url(event['id'], event['name'])  # Assuming you have stored the URL of the event in the event object
+    
+    # Make a request to the event URL
+    response = requests.get(event_url)
+    
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Check if there is a bracket
+        bracket = soup.find('div', class_='bracket-holder')
+        
+        if bracket:
+            # If a bracket exists, extract details from it
+            
+            # Placeholder for match details
+            match_details = []
+            
+            # Iterate over each round
+            for round_div in bracket.find_all('div', class_='round'):
+                round_name = round_div.find('div', class_='round-header').text.strip()
+                print(round_name)
+                
+                # Iterate over each match in the round
+                for match_div in round_div.find_all('div', class_='match'):
+                    match_time = match_div.find('div', class_='header').find('span', class_='time-time').text.strip()
+                    team1 = match_div.find('div', class_='team1').find('span', class_='team-name').text.strip()
+                    team2 = match_div.find('div', class_='team2').find('span', class_='team-name').text.strip()
+                    
+                    # Add match details to the list
+                    match_details.append({
+                        'time': match_time,
+                        'team1': team1,
+                        'team2': team2
+                    })
+            
+            return match_details
+        else:
+            # If no bracket exists, fetch match details from the matches page directly
+            # You can implement this part based on the structure of the matches page
+            
+            # Placeholder for match details
+            match_details = []
+            
+            # Fetch match details from the matches page
+            
+            return match_details
+    else:
+        print('Failed to fetch event page:', response.status_code)
+        return None
 
 @app.route('/eventsUpcoming')
 def get_upcoming_events():
