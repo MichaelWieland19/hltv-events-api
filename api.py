@@ -58,29 +58,60 @@ def fetch_matches_for_event(event):
                 # Iterate over each match in the round
                 for match_div in round_div.find_all('div', class_='match'):
                     match_time = match_div.find('div', class_='header').find('span', class_='time-time').text.strip()
-                    team1 = match_div.find('div', class_='team1').find('span', class_='team-name').text.strip()
-                    team2 = match_div.find('div', class_='team2').find('span', class_='team-name').text.strip()
+                    team1_container = match_div.find('div', class_='team1')
+                    team2_container = match_div.find('div', class_='team2')
+                    
+                    team1 = team1_container.find('span', class_='team-name').text.strip()
+                    team2 = team2_container.find('span', class_='team-name').text.strip()
+                    
+                    team1_logo = team1_container.find('img')['src'] if team1_container.find('img') else None
+                    team2_logo = team2_container.find('img')['src'] if team2_container.find('img') else None
                     
                     # Add match details to the list
                     match_details.append({
                         'time': match_time,
                         'team1': team1,
-                        'team2': team2
+                        'team2': team2,
+                        'team1_logo': team1_logo,
+                        'team2_logo': team2_logo
                     })
             
             return match_details
         else:
             # If no bracket exists, fetch match details from the matches page directly
-            # You can implement this part based on the structure of the matches page
+
+            event_url_base = '/'.join(event_url.split('/')[:-1])
+            event_url_base += '/matches'
+            
+            matches = soup.find_all('div', class_='upcomingMatch')
             
             # Placeholder for match details
             match_details = []
             
-            # Fetch match details from the matches page
+            # Iterate over each match
+            for match in matches:
+                match_time = match.find('div', class_='matchTime').text.strip()
+                team1_container = match.find('div', class_='matchTeam team1')
+                team2_container = match.find('div', class_='matchTeam team2')
+                
+                team1 = team1_container.find('div', class_='matchTeamName').text.strip()
+                team2 = team2_container.find('div', class_='matchTeamName').text.strip()
+                
+                team1_logo = team1_container.find('img')['src'] if team1_container.find('img') else None
+                team2_logo = team2_container.find('img')['src'] if team2_container.find('img') else None
+                
+                # Add match details to the list
+                match_details.append({
+                    'time': match_time,
+                    'team1': team1,
+                    'team2': team2,
+                    'team1_logo': team1_logo,
+                    'team2_logo': team2_logo
+                })
             
             return match_details
     else:
-        print('Failed to fetch event page:', response.status_code)
+        print('Failed to fetch matches page:', response.status_code)
         return None
 
 @app.route('/eventsUpcoming')
