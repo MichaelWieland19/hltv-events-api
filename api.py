@@ -19,7 +19,7 @@ def get_matches_for_event():
 
     # Initialize a list to store matches for each event
     events_matches = []
-
+    print(featured_events)
     # Iterate over each featured event to fetch matches
     for event in featured_events:
         event_matches = fetch_matches_for_event(event)
@@ -28,88 +28,44 @@ def get_matches_for_event():
     return jsonify(events_matches)
 
 def fetch_matches_for_event(event):
-    # Web scraping logic to fetch matches for a specific event
-    # For each event, you will need to determine the URL of the event page
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
 
     event_url = generate_clean_url(event['id'], event['name'])  # Assuming you have stored the URL of the event in the event object
-    
-    # Make a request to the event URL
-    response = requests.get(event_url)
-    
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Parse the HTML content using BeautifulSoup
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Check if there is a bracket
-        bracket = soup.find('div', class_='bracket-holder')
-        
-        if bracket:
-            # If a bracket exists, extract details from it
-            
-            # Placeholder for match details
-            match_details = []
-            
-            # Iterate over each round
-            for round_div in bracket.find_all('div', class_='round'):
-                round_name = round_div.find('div', class_='round-header').text.strip()
-                print(round_name)
-                
-                # Iterate over each match in the round
-                for match_div in round_div.find_all('div', class_='match'):
-                    match_time = match_div.find('div', class_='header').find('span', class_='time-time').text.strip()
-                    team1_container = match_div.find('div', class_='team1')
-                    team2_container = match_div.find('div', class_='team2')
-                    
-                    team1 = team1_container.find('span', class_='team-name').text.strip()
-                    team2 = team2_container.find('span', class_='team-name').text.strip()
-                    
-                    team1_logo = team1_container.find('img')['src'] if team1_container.find('img') else None
-                    team2_logo = team2_container.find('img')['src'] if team2_container.find('img') else None
-                    
-                    # Add match details to the list
-                    match_details.append({
-                        'time': match_time,
-                        'team1': team1,
-                        'team2': team2,
-                        'team1_logo': team1_logo,
-                        'team2_logo': team2_logo
-                    })
-            
-            return match_details
-        else:
-            # If no bracket exists, fetch match details from the matches page directly
 
-            event_url_base = '/'.join(event_url.split('/')[:-1])
-            event_url_base += '/matches'
-            
-            matches = soup.find_all('div', class_='upcomingMatch')
-            
-            # Placeholder for match details
-            match_details = []
-            
-            # Iterate over each match
-            for match in matches:
-                match_time = match.find('div', class_='matchTime').text.strip()
-                team1_container = match.find('div', class_='matchTeam team1')
-                team2_container = match.find('div', class_='matchTeam team2')
-                
-                team1 = team1_container.find('div', class_='matchTeamName').text.strip()
-                team2 = team2_container.find('div', class_='matchTeamName').text.strip()
-                
-                team1_logo = team1_container.find('img')['src'] if team1_container.find('img') else None
-                team2_logo = team2_container.find('img')['src'] if team2_container.find('img') else None
-                
-                # Add match details to the list
-                match_details.append({
-                    'time': match_time,
-                    'team1': team1,
-                    'team2': team2,
-                    'team1_logo': team1_logo,
-                    'team2_logo': team2_logo
-                })
-            
-            return match_details
+    # Create the matches URL
+    event_url_base = '/'.join(event_url.split('/')[:-1])
+    event_url_base += '/matches'
+
+    print(event_url_base)
+    # Make a request to the matches page
+    response = requests.get(event_url_base, headers=headers)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        matches = soup.find_all('div', class_='upcomingMatch')
+
+        match_details = []
+
+        for match in matches:
+            match_time = match.find('div', class_='matchTime').text.strip()
+            team1_container = match.find('div', class_='matchTeam team1')
+            team2_container = match.find('div', class_='matchTeam team2')
+            team1 = team1_container.find('div', class_='matchTeamName').text.strip()
+            team2 = team2_container.find('div', class_='matchTeamName').text.strip()
+            team1_logo = team1_container.find('img')['src'] if team1_container.find('img') else None
+            team2_logo = team2_container.find('img')['src'] if team2_container.find('img') else None
+
+            match_details.append({
+                'time': match_time,
+                'team1': team1,
+                'team2': team2,
+                'team1_logo': team1_logo,
+                'team2_logo': team2_logo
+            })
+
+        return match_details
     else:
         print('Failed to fetch matches page:', response.status_code)
         return None
